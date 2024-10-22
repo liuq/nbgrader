@@ -4,6 +4,7 @@ import os
 import sys
 import shutil
 import datetime
+from thefuzz import process
 
 from dateutil.tz import gettz
 from textwrap import dedent
@@ -15,6 +16,7 @@ from .baseapp import NbGrader
 from ..plugins import BasePlugin, ExtractorPlugin, FileNameCollectorPlugin
 from ..utils import check_directory, rmtree, parse_utc
 from ..utils import find_all_notebooks
+from ..api import Gradebook
 
 aliases = {
     'log-level': 'Application.log_level',
@@ -243,13 +245,14 @@ class ZipCollectApp(NbGrader):
         extracted_path = self._format_collect_path(self.extracted_directory)
         self._mkdirs_if_missing(extracted_path)
         self._clear_existing_files(extracted_path)
-        self.extractor_plugin_inst.extract(archive_path, extracted_path)
+        self.extractor_plugin_inst.extract(archive_path, extracted_path)        
 
     def process_extracted_files(self):
         """Collect the files in the `extracted_directory` using a given plugin
         to process the filename of each file. Collected files are transfered to
         the students `submitted_directory`.
         """
+        
         extracted_path = self._format_collect_path(self.extracted_directory)
         if not check_directory(extracted_path, write=False, execute=True):
             self.log.warning("Directory not found: {}".format(extracted_path))
@@ -326,7 +329,19 @@ class ZipCollectApp(NbGrader):
                     )
 
             _, ext = os.path.splitext(_file)
-            submission = os.path.splitext(info['file_id'])[0] + ext
+            # file_id could not match with the name of the notebook stored
+            file_id = info['file_id']
+            # Just a single notebook, proceed with renaming
+            if len(self.notebooks) == 1:
+                file_id = self.notebooks[0]
+            else:
+                file_id = process.extractOne(file_id, self.notebooks)                
+            if file_id != info['file_id']:
+                if len(self.notebooks) > 1:
+                    self.log.warning('Multiple notebooks, trying to guess names')
+                self.log.warning(f'{info["file_id"]} renamted to {file_id}')
+
+            submission = os.path.splitext(file_id)[0] + ext
             if ext in ['.ipynb'] and submission not in released_notebooks:
                 self.log.debug(
                     "Valid notebook names are: {}".format(released_notebooks))
@@ -496,5 +511,7 @@ class ZipCollectApp(NbGrader):
     def start(self):
         super(ZipCollectApp, self).start()
         self.init_plugins()
+        with Gradebook(self.coursedir.db_url, self.coursedir.course_id) as gb:
+            self.notebooks = [notebook.name for notebook in gb.find_assignment(self.coursedir.assignment_id).notebooks]
         self.extract_archive_files()
         self.process_extracted_files()
