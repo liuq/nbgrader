@@ -10,7 +10,7 @@
   "license": "BSD-3-Clause",
   "repository": {
     "type": "git",
-    "url": "https://github.com/liuq/nbgrader.git"
+    "url": "https://github.com/jupyter/nbgrader.git"
   },
   "author": {
     "name": "Jupyter Development Team",

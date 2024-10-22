@@ -37,7 +37,8 @@ from . import (
     UpdateApp,
     ZipCollectApp,
     GenerateConfigApp,
-    GenerateSolutionApp
+    GenerateSolutionApp,
+    ZipReleaseFeedbackApp
 )
 from traitlets.traitlets import MetaHasTraits
 from typing import List
@@ -142,6 +143,15 @@ class NbGraderApp(NbGrader):
             dedent(
                 """
                 Generate feedback (after autograding and manual grading).
+                Intended for use by instructors only.
+                """
+            ).strip()
+        ),
+        zip_release_feedback=(
+            ZipReleaseFeedbackApp,
+            dedent(
+                """
+                Releases feedback into a zip archive for LMS upload.
                 Intended for use by instructors only.
                 """
             ).strip()

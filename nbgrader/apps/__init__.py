@@ -3,6 +3,7 @@ from .assignapp import AssignApp
 from .generateassignmentapp import GenerateAssignmentApp
 from .autogradeapp import AutogradeApp
 from .feedbackapp import FeedbackApp
+from .zipreleasefeedbackapp import ZipReleaseFeedbackApp
 from .generatefeedbackapp import GenerateFeedbackApp
 from .formgradeapp import FormgradeApp
 from .validateapp import ValidateApp

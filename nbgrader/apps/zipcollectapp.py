@@ -3,10 +3,8 @@
 import os
 import sys
 import shutil
-import datetime
 from thefuzz import process
 
-from dateutil.tz import gettz
 from textwrap import dedent
 from traitlets import Bool, Instance, Type, Unicode
 from traitlets.config.application import catch_config_error, default
@@ -48,7 +46,6 @@ flags = {
         "Skip submitted notebooks with invalid names."
     ),
 }
-
 
 class ZipCollectApp(NbGrader):
 
@@ -374,6 +371,15 @@ class ZipCollectApp(NbGrader):
                         "Invalid timestamp string: {}".format(timestamp))
 
             student_id = info['student_id']
+
+            # this is a brand new student, if there is the name information create it
+            with Gradebook(self.coursedir.db_url, self.coursedir.course_id) as gb:
+                # check if the student is not yet in the db
+                try:
+                    gb.find_student(student_id)
+                except:
+                    if 'first_name' in info or 'last_name' in info:
+                        gb.add_student(student_id, first_name=info.get('first_name'), last_name=info.get('last_name'))
 
             # new student id record
             if student_id not in data.keys():
